@@ -2,30 +2,18 @@
 
 *This project has been created as part of the 42 curriculum by danfranc, jdel-cer.*
 
----
-
 ## Description
 
-**A-Maze-ing** is a maze generator and solver developed in Python 3.10+.  
-It reads a configuration file to generate perfect mazes (a single path between any two points), exports them in hexadecimal format, and computes the shortest path between entry and exit.
+A-Maze-ing is a maze generator and solver developed in Python 3.10+. It generates perfect mazes using the Recursive Backtracker algorithm, solves them using BFS, and provides visual representation via graphics or terminal.
 
-The maze is generated using the Recursive Backtracker algorithm and solved using Breadth-First Search (BFS).
-
----
-
-## Instructions
-
-### Requirements
+## Requirements
 
 - Python 3.10+
+- MLX library (for graphical display)
 
-### Execution
+## Execution
 
-```bash
-python3 a_maze_ing.py <config_file>
-```
-
-Example:
+### Basic Usage
 
 ```bash
 python3 a_maze_ing.py config.txt
@@ -37,94 +25,55 @@ Or:
 make run
 ```
 
----
+The program will:
+1. Generate the maze based on `config.txt`
+2. Solve the maze
+3. Save the result to the output file
+4. Display the maze graphically (MLX) or in terminal (fallback)
 
-## Configuration File Structure
+## Configuration File
 
 The configuration file must contain:
 
 ```
-WIDTH=<int>
-HEIGHT=<int>
-ENTRY=x,y
-EXIT=x,y
-OUTPUT_FILE=<filename>
-PERFECT=true|false
+WIDTH=20
+HEIGHT=15
+ENTRY=0,0
+EXIT=19,14
+OUTPUT_FILE=maze.txt
+PERFECT=True
 ```
 
----
+- `WIDTH` and `HEIGHT`: Maze dimensions (in cells)
+- `ENTRY` and `EXIT`: Entry and exit coordinates (x,y)
+- `OUTPUT_FILE`: Output filename for the maze data
+- `PERFECT`: Set to True for perfect mazes (single path), False for multiple paths
 
-## Maze Generation Algorithm
+## Output File Format
 
-### Recursive Backtracker (Depth-First Search)
+The output file contains:
+- Maze grid in hexadecimal format (1 hex digit per cell, encoding wall configuration)
+- Entry coordinates
+- Exit coordinates
+- Solution path (sequence of directions: N/E/S/W)
 
-The maze is generated using a randomized Depth-First Search (DFS) with backtracking:
+Example format:
+```
+D3D13951555395153953
+D3C53C543C3BC569696A
+...
+0,0
+19,14
+ESESWWSEEESENESENNNENEEEESWSWSEEESWWWSWWSEESSSSWSEENESEESWWS
+```
 
-1. Start from an initial cell.
-2. Randomly choose an unvisited neighbor.
-3. Remove the wall between the current cell and the chosen neighbor.
-4. Continue until all cells are visited.
+## Interactive Display
 
-### Why this algorithm
+### Graphical Mode (MLX)
+- Press `S` to toggle solution visibility
+- Press `C` to change wall colors
+- Press `ESC` to exit
 
-- Produces perfect mazes.
-- Simple and efficient to implement.
-- Ensures full connectivity.
-
----
-
-## Reusable Code
-
-The `MazeGenerator` class is reusable and modular:
-
-- Supports arbitrary dimensions.
-- Can generate perfect mazes.
-- Includes solving functionality.
-- Can be extended with additional algorithms.
-
----
-
-## Project Management
-
-### Team Roles
-
-- **danfranc** — Maze generation implementation.
-- **jdel-cer** — Visualization/graphics, interactive display of the maze.
-
-### Planning and Evolution
-
-Initial plan:
-- Implement maze generation.
-- Implement solver.
-- Add configuration parsing.
-- Add file export.
-
-Evolution:
-- Refactored grid handling.
-- Improved type annotations.
-- Integrated pattern overlay.
-- Improved error handling.
-
-### What Worked Well
-
-- Clear separation between generation and solving.
-- Modular class design.
-
-### What Could Be Improved
-
-- Add automated testing.
-- Improve scalability for larger mazes.
-
-### Tools Used
-
-- Python 3.10
-- flake8
-- mypy
-- Git
-
----
-
-### AI Usage
-
-AI tools were used for documentation structuring, minor refactoring suggestions, and grammar correction.
-All core logic and algorithm implementation were developed by the team.
+### Terminal Mode
+- Shows ASCII representation of the maze
+- Displays solution path automatically

@@ -1,6 +1,8 @@
 import sys
 from typing import Dict
 from generator import MazeGenerator
+from visualizer import MazeVisualizer
+from terminal_visualizer import TerminalVisualizer
 
 
 def load_config(file: str) -> Dict[str, str]:
@@ -53,13 +55,44 @@ def main() -> None:
 
     for x in config["EXIT"].split(","):
         exitlist.append(int(x))
-    exit = tuple(exitlist)
+    exit_pos = tuple(exitlist)
 
-    maze = MazeGenerator(width, height, is_perfect=perfect)
-    maze.add_pattern()
-    maze.generate()
-    solution = maze.solve(entry, exit)
-    maze.save_to_file("maze.txt", entry, exit, solution)
+    # Create visualizer once
+    visualizer = MazeVisualizer(width, height, cell_size=30)
+    
+    def generate_new_maze() -> None:
+        """Generate a new maze and update the visualizer."""
+        maze = MazeGenerator(width, height, is_perfect=perfect)
+        maze.add_pattern()
+        maze.generate()
+        solution = maze.solve(entry, exit_pos)
+        maze.save_to_file("maze.txt", entry, exit_pos, solution)
+        
+        # Update visualizer with new maze data
+        visualizer.set_maze_data(maze.grid, maze.pattern, entry, exit_pos, solution)
+        visualizer.update_display()
+
+    def display_maze() -> None:
+        """Generate and display the maze."""
+        generate_new_maze()
+        
+        print("Maze generated and saved to maze.txt")
+        
+        # Display visual representation with fallback
+        try:
+            visualizer.display(regenerate_callback=generate_new_maze)
+        except Exception as e:
+            print(f"Graphical display unavailable: {e}")
+            print("Showing terminal visualization instead...\n")
+            terminal_viz = TerminalVisualizer(width, height)
+            maze = MazeGenerator(width, height, is_perfect=perfect)
+            maze.add_pattern()
+            maze.generate()
+            solution = maze.solve(entry, exit_pos)
+            terminal_viz.set_maze_data(maze.grid, maze.pattern, entry, exit_pos, solution)
+            terminal_viz.display(show_solution=True)
+
+    display_maze()
 
 
 if __name__ == "__main__":

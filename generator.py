@@ -42,8 +42,8 @@ class MazeGenerator:
     def add_pattern(self) -> None:
         """Overlay a visible 42 pattern."""
         pattern = [
-            "X...XXX",
-            "X.....X",
+            "X.X.XXX",
+            "X.X...X",
             "XXX.XXX",
             "..X.X..",
             "..X.XXX"
