@@ -76,6 +76,12 @@ class MazeVisualizer:
         self.current_palette = 0
         self.palettes = [self.PALETTE_1, self.PALETTE_2, self.PALETTE_3]
         
+        # Animation state for progressive solution display
+        self.is_animating = False
+        self.animation_progress = 0  # Current step in the solution path
+        self.animation_frame_counter = 0  # Frame counter for speed control
+        self.animation_speed = 80  # Frames between steps (lower = faster)
+        
         self.mlx: Optional[Any] = None
         self.mlx_ptr: Optional[Any] = None
         self.window: Optional[Any] = None
@@ -246,8 +252,17 @@ class MazeVisualizer:
             cell_color = self.COLOR_ENTRY
         elif (cell_x, cell_y) == self.exit:
             cell_color = self.COLOR_EXIT
-        elif self.show_solution and (cell_x, cell_y) in self._get_solution_cells():
-            cell_color = self.COLOR_SOLUTION
+        elif self.show_solution:
+            # Use animated solution if animating, otherwise use full solution
+            if self.is_animating:
+                solution_cells = self._get_animated_solution_cells()
+            else:
+                solution_cells = self._get_solution_cells()
+            
+            if (cell_x, cell_y) in solution_cells:
+                cell_color = self.COLOR_SOLUTION
+            else:
+                cell_color = self.COLOR_PATH
         else:
             cell_color = self.COLOR_PATH
 
@@ -322,6 +337,35 @@ class MazeVisualizer:
 
         return cells
 
+    def _get_animated_solution_cells(self) -> set:  # type: ignore
+        """
+        Get only the cells up to the current animation progress.
+
+        Returns:
+            Set of tuples representing the animated solution path
+        """
+        cells = {self.entry}
+        current_x, current_y = self.entry
+
+        direction_map = {
+            'N': (0, -1),
+            'E': (1, 0),
+            'S': (0, 1),
+            'W': (-1, 0)
+        }
+
+        # Only iterate up to the animation progress
+        for i, direction in enumerate(self.solution_path):
+            if i >= self.animation_progress:
+                break
+            if direction in direction_map:
+                dx, dy = direction_map[direction]
+                current_x += dx
+                current_y += dy
+                cells.add((current_x, current_y))
+
+        return cells
+
     def _render_maze(self) -> None:
         """Render the entire maze to the image buffer."""
         # Clear maze area with background color
@@ -333,6 +377,44 @@ class MazeVisualizer:
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 self._draw_cell(x, y)
+
+    def _render_maze_fast(self) -> None:
+        """
+        Fast render for animation - only updates the animated solution cells.
+        Much faster than full re-render.
+        """
+        # Get the current animated cells
+        animated_cells = self._get_animated_solution_cells()
+        
+        # If this is the first frame of animation, do a full render
+        if self.animation_progress == 1:
+            self._render_maze()
+            return
+        
+        # Otherwise just update the newly added cell(s)
+        if self.animation_progress > 0 and self.animation_progress <= len(self.solution_path):
+            # Get the current position of the solution
+            current_x, current_y = self.entry
+            direction_map = {
+                'N': (0, -1),
+                'E': (1, 0),
+                'S': (0, 1),
+                'W': (-1, 0)
+            }
+            
+            # Follow path to the current position
+            for i in range(self.animation_progress):
+                if i < len(self.solution_path):
+                    direction = self.solution_path[i]
+                    if direction in direction_map:
+                        dx, dy = direction_map[direction]
+                        current_x += dx
+                        current_y += dy
+            
+            # Only redraw the current cell
+            self._draw_cell(current_x, current_y)
+            self._put_image_to_window()
+
 
     def _put_image_to_window(self) -> None:
         """Display the rendered image on the window."""
@@ -349,6 +431,32 @@ class MazeVisualizer:
             )
         except Exception:
             pass
+
+    def _update_animation(self, param: object) -> int:
+        """
+        Update the animation progress for progressive solution display.
+        
+        Args:
+            param: Parameter passed by MLX loop hook
+            
+        Returns:
+            0 to continue the loop
+        """
+        if not self.is_animating:
+            return 0
+
+        # Always advance animation by 1 step per call for maximum speed
+        self.animation_progress += 1
+
+        # Check if animation is complete
+        if self.animation_progress >= len(self.solution_path):
+            self.is_animating = False
+            self.animation_progress = len(self.solution_path)
+
+        # Use fast render for animation (only updates the new cell)
+        self._render_maze_fast()
+
+        return 0
 
     def _key_handler(self, keycode: int, param: object) -> int:
         """
@@ -367,9 +475,21 @@ class MazeVisualizer:
                 self.regenerate_callback()
             return 0
 
-        # '2' key - Toggle solution (50)
+        # '2' key - Toggle solution animation (50)
         if keycode == 50:
-            self.show_solution = not self.show_solution
+            if self.show_solution:
+                # If already showing solution, turn it off
+                self.show_solution = False
+                self.is_animating = False
+                self.animation_progress = 0
+                self.animation_frame_counter = 0
+            else:
+                # Start animation of solution
+                self.show_solution = True
+                self.is_animating = True
+                self.animation_progress = 0
+                self.animation_frame_counter = 0
+            
             self._render_maze()
             self._put_image_to_window()
             return 0
@@ -408,9 +528,10 @@ class MazeVisualizer:
             self._render_maze()
             self._put_image_to_window()
 
-            # Set up key hook
+            # Set up key hook and loop hook for animation
             if self.mlx and self.window and self.mlx_ptr:
                 self.mlx.mlx_key_hook(self.window, self._key_handler, self)
+                self.mlx.mlx_loop_hook(self.mlx_ptr, self._update_animation, self)
                 self.mlx.mlx_loop(self.mlx_ptr)
 
         except Exception as e:
