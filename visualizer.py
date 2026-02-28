@@ -471,25 +471,28 @@ class MazeVisualizer:
         """
         # '1' key - Regenerate maze (49)
         if keycode == 49:
+            # Regenerate with clean maze (no solution shown)
             if self.regenerate_callback:
                 self.regenerate_callback()
+            # Reset animation state
+            self.show_solution = False
+            self.is_animating = False
+            self.animation_progress = 0
+            self.animation_frame_counter = 0
+            # Render clean maze
+            self._render_maze()
+            self._put_image_to_window()
             return 0
 
-        # '2' key - Toggle solution animation (50)
+        # '2' key - Start solution animation (50)
         if keycode == 50:
-            if self.show_solution:
-                # If already showing solution, turn it off
-                self.show_solution = False
-                self.is_animating = False
-                self.animation_progress = 0
-                self.animation_frame_counter = 0
-            else:
-                # Start animation of solution
-                self.show_solution = True
-                self.is_animating = True
-                self.animation_progress = 0
-                self.animation_frame_counter = 0
+            # Always start animating the solution
+            self.show_solution = True
+            self.is_animating = True
+            self.animation_progress = 0
+            self.animation_frame_counter = 0
             
+            # Render initial state
             self._render_maze()
             self._put_image_to_window()
             return 0
