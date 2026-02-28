@@ -37,9 +37,6 @@ class MazeVisualizer:
     COLOR_SOLUTION: int = 0xFFFF00  # Yellow
     COLOR_PATTERN: int = 0xFF00FF  # Magenta
     COLOR_BACKGROUND: int = 0x1a1a1a  # Very dark gray
-    COLOR_MENU_BG: int = 0x2a2a2a  # Darker gray for menu
-    COLOR_MENU_TEXT: int = 0xDDDDDD  # Light gray text
-    COLOR_MENU_HIGHLIGHT: int = 0x00CCFF  # Cyan highlight
 
     def __init__(
         self,
@@ -59,13 +56,15 @@ class MazeVisualizer:
         self.maze_height = height
         self.cell_size = cell_size
 
-        # Larger window with menu area below
-        self.maze_area_width = width * cell_size + 60
-        self.maze_area_height = height * cell_size + 60
-        self.menu_height = 150
+        # Padding around the maze (in pixels)
+        self.padding = 50
         
-        self.window_width = self.maze_area_width
-        self.window_height = self.maze_area_height + self.menu_height
+        # Window dimensions with padding
+        self.maze_area_width = width * cell_size
+        self.maze_area_height = height * cell_size
+        
+        self.window_width = self.maze_area_width + (self.padding * 2)
+        self.window_height = self.maze_area_height + (self.padding * 2)
 
         self.grid: List[List[int]] = []
         self.pattern: List[Tuple[int, int]] = []
@@ -231,8 +230,9 @@ class MazeVisualizer:
         if cell_y < 0 or cell_y >= self.maze_height:
             return
 
-        x_offset = 30
-        y_offset = 30
+        # Use padding for offsets
+        x_offset = self.padding
+        y_offset = self.padding
 
         pixel_x = x_offset + cell_x * self.cell_size
         pixel_y = y_offset + cell_y * self.cell_size
@@ -333,83 +333,6 @@ class MazeVisualizer:
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 self._draw_cell(x, y)
-
-        # Draw menu area
-        self._render_menu()
-
-    def _render_menu(self) -> None:
-        """Render the menu area at the bottom of the window."""
-        menu_y = self.maze_area_height
-        
-        # Menu background
-        self._draw_rectangle(0, menu_y, self.window_width, self.menu_height, self.COLOR_MENU_BG)
-        
-        # Menu border
-        for x in range(self.window_width):
-            self._draw_pixel(x, menu_y, self.COLOR_MENU_HIGHLIGHT)
-
-        # Draw menu text using string_put
-        if self.mlx and self.mlx_ptr and self.window:
-            text_y = menu_y + 15
-            text_x = 20
-            
-            # Menu title
-            self.mlx.mlx_string_put(
-                self.mlx_ptr,
-                self.window,
-                text_x,
-                text_y,
-                self.COLOR_MENU_HIGHLIGHT,
-                "--- MENU OPTIONS ---"
-            )
-            
-            # Menu items
-            self.mlx.mlx_string_put(
-                self.mlx_ptr,
-                self.window,
-                text_x,
-                text_y + 25,
-                self.COLOR_MENU_TEXT,
-                "1. Re-generate a new maze"
-            )
-            
-            solution_status = "ON" if self.show_solution else "OFF"
-            self.mlx.mlx_string_put(
-                self.mlx_ptr,
-                self.window,
-                text_x,
-                text_y + 40,
-                self.COLOR_MENU_TEXT,
-                f"2. Show/Hide path from entry to exit [{solution_status}]"
-            )
-            
-            palette_name = self.palettes[self.current_palette]["name"]
-            self.mlx.mlx_string_put(
-                self.mlx_ptr,
-                self.window,
-                text_x,
-                text_y + 55,
-                self.COLOR_MENU_TEXT,
-                f"3. Rotate maze colors [{palette_name}]"
-            )
-            
-            self.mlx.mlx_string_put(
-                self.mlx_ptr,
-                self.window,
-                text_x,
-                text_y + 70,
-                self.COLOR_MENU_TEXT,
-                "4. Quit"
-            )
-            
-            self.mlx.mlx_string_put(
-                self.mlx_ptr,
-                self.window,
-                text_x,
-                text_y + 90,
-                self.COLOR_MENU_HIGHLIGHT,
-                "Choice? (1-4):"
-            )
 
     def _put_image_to_window(self) -> None:
         """Display the rendered image on the window."""

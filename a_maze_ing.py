@@ -57,8 +57,8 @@ def main() -> None:
         exitlist.append(int(x))
     exit_pos = tuple(exitlist)
 
-    # Create visualizer once
-    visualizer = MazeVisualizer(width, height, cell_size=30)
+    # Create visualizer once - larger cell size for better visibility
+    visualizer = MazeVisualizer(width, height, cell_size=40)
     
     def generate_new_maze() -> None:
         """Generate a new maze and update the visualizer."""
