@@ -25,18 +25,50 @@ class MazeVisualizer:
     Handles rendering, user interactions, and maze solution display.
     """
 
-    # Color palettes
-    PALETTE_1 = {"wall": 0x000000, "name": "Black & White"}
-    PALETTE_2 = {"wall": 0xFF6600, "name": "Orange & Blue"}
-    PALETTE_3 = {"wall": 0xFF0066, "name": "Pink & Cyan"}
-
-    # Other color constants (RGB)
-    COLOR_PATH: int = 0xFFFFFF  # White
-    COLOR_ENTRY: int = 0x00FF00  # Green
-    COLOR_EXIT: int = 0xFF0000  # Red
-    COLOR_SOLUTION: int = 0xFFFF00  # Yellow
-    COLOR_PATTERN: int = 0xFF00FF  # Magenta
-    COLOR_BACKGROUND: int = 0x1a1a1a  # Very dark gray
+    # Color palettes - Four distinct themes
+    PALETTE_DARK = {
+        "background": 0x000000,  # Black
+        "wall": 0xFFFFFF,        # White
+        "entry": 0x00FF00,       # Green
+        "exit": 0xFF0000,        # Red
+        "path": 0x000000,        # Black (same as background)
+        "pattern": 0x00FF00,     # Green (42 pattern)
+        "solution": 0xFF1493,    # Pink
+        "name": "Dark"
+    }
+    
+    PALETTE_LIGHT = {
+        "background": 0xFFFFFF,  # White
+        "wall": 0x000000,        # Black
+        "entry": 0x00FF00,       # Green
+        "exit": 0xFF0000,        # Red
+        "path": 0xFFFFFF,        # White (same as background)
+        "pattern": 0xFF1493,     # Pink (42 pattern)
+        "solution": 0x000000,    # Black
+        "name": "Light"
+    }
+    
+    PALETTE_FUTURE = {
+        "background": 0x4B0082,  # Purple
+        "wall": 0x39FF14,        # Neon Green
+        "entry": 0x00FF00,       # Green
+        "exit": 0xFF0000,        # Red
+        "path": 0x4B0082,        # Purple (same as background)
+        "pattern": 0x000000,     # Black (42 pattern)
+        "solution": 0xFFFFFF,    # Pink
+        "name": "Future"
+    }
+    
+    PALETTE_42_THEME = {
+        "background": 0x00423F,  # Dark turquoise/teal
+        "wall": 0x000000,        # Black
+        "entry": 0x00FF00,       # Green
+        "exit": 0xFF0000,        # Red
+        "path": 0x00423F,        # Teal (same as background)
+        "pattern": 0x000000,     # Black (42 pattern)
+        "solution": 0xFFFF00,    # Yellow
+        "name": "42 Theme"
+    }
 
     def __init__(
         self,
@@ -74,7 +106,7 @@ class MazeVisualizer:
 
         self.show_solution = False
         self.current_palette = 0
-        self.palettes = [self.PALETTE_1, self.PALETTE_2, self.PALETTE_3]
+        self.palettes = [self.PALETTE_DARK, self.PALETTE_LIGHT, self.PALETTE_FUTURE, self.PALETTE_42_THEME]
         
         # Animation state for progressive solution display
         self.is_animating = False
@@ -245,13 +277,16 @@ class MazeVisualizer:
 
         cell_value = self.grid[cell_y][cell_x]
 
+        # Get palette colors
+        palette = self.palettes[self.current_palette]
+        
         # Determine cell color
         if (cell_x, cell_y) in self.pattern:
-            cell_color = self.COLOR_PATTERN
+            cell_color = palette["pattern"]
         elif (cell_x, cell_y) == self.entry:
-            cell_color = self.COLOR_ENTRY
+            cell_color = palette["entry"]
         elif (cell_x, cell_y) == self.exit:
-            cell_color = self.COLOR_EXIT
+            cell_color = palette["exit"]
         elif self.show_solution:
             # Use animated solution if animating, otherwise use full solution
             if self.is_animating:
@@ -260,11 +295,11 @@ class MazeVisualizer:
                 solution_cells = self._get_solution_cells()
             
             if (cell_x, cell_y) in solution_cells:
-                cell_color = self.COLOR_SOLUTION
+                cell_color = palette["solution"]
             else:
-                cell_color = self.COLOR_PATH
+                cell_color = palette["path"]
         else:
-            cell_color = self.COLOR_PATH
+            cell_color = palette["path"]
 
         # Draw cell background
         for dy in range(self.cell_size - 2):
@@ -368,10 +403,11 @@ class MazeVisualizer:
 
     def _render_maze(self) -> None:
         """Render the entire maze to the image buffer."""
-        # Clear maze area with background color
+        # Clear maze area with background color from palette
+        bg_color = self.palettes[self.current_palette]["background"]
         for y in range(self.maze_area_height):
             for x in range(self.window_width):
-                self._draw_pixel(x, y, self.COLOR_BACKGROUND)
+                self._draw_pixel(x, y, bg_color)
 
         # Draw all cells
         for y in range(self.maze_height):
